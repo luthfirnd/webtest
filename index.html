@@ -502,6 +502,7 @@
 
         function getCanvasCoordinates(e) {
             const rect = canvas.getBoundingClientRect();
+            const ratio = window.devicePixelRatio || 1;
             let clientX, clientY;
 
             if (e.touches && e.touches.length > 0) {
@@ -513,10 +514,11 @@
             }
 
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: (clientX - rect.left) * ratio,
+                y: (clientY - rect.top) * ratio
             };
         }
+
 
 
         // Set canvas size properly
