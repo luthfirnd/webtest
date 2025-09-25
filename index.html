@@ -500,6 +500,25 @@
         let signatureData = [];
         let currentStroke = [];
 
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+
         // Set canvas size properly
         function resizeCanvas() {
             const rect = canvas.getBoundingClientRect();
@@ -525,6 +544,51 @@
             resizeTimeout = setTimeout(resizeCanvas, 300);
         });
 
+        function redrawSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            signatureData.forEach(stroke => {
+                if (stroke.length > 0) {
+                ctx.beginPath();
+                ctx.moveTo(stroke[0].x, stroke[0].y);
+                stroke.forEach(point => {
+                    ctx.lineTo(point.x, point.y);
+                });
+                ctx.stroke();
+                }
+            });
+        }
+
+
+        function startDrawing(e) {
+            isDrawing = true;
+            currentStroke = [];
+            const rect = canvas.getBoundingClientRect();
+            const ratio = window.devicePixelRatio || 1;
+            const x = (e.clientX - rect.left) * ratio;
+            const y = (e.clientY - rect.top) * ratio;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            currentStroke.push({x, y});
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const ratio = window.devicePixelRatio || 1;
+            const x = (e.clientX - rect.left) * ratio;
+            const y = (e.clientY - rect.top) * ratio;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            currentStroke.push({x, y});
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                signatureData.push([...currentStroke]);
+                currentStroke = [];
+            }
+        }
 
         // Mouse events for signature
         canvas.addEventListener('mousedown', startDrawing);
@@ -536,57 +600,6 @@
         canvas.addEventListener('touchstart', handleTouch);
         canvas.addEventListener('touchmove', handleTouch);
         canvas.addEventListener('touchend', stopDrawing);
-
-        
-        // ---- Tambahan baru untuk hitung posisi presisi ----
-        function getCanvasCoordinates(e) {
-            const rect = canvas.getBoundingClientRect();
-            const ratio = window.devicePixelRatio || 1;
-
-            let clientX, clientY;
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-
-            const x = (clientX - rect.left) * ratio;
-            const y = (clientY - rect.top) * ratio;
-
-            return { x, y };
-        }
-
-
-        function startDrawing(e) {
-            isDrawing = true;
-            currentStroke = [];
-
-            const { x, y } = getCanvasCoordinates(e);
-
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            currentStroke.push({ x, y });
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-
-            const { x, y } = getCanvasCoordinates(e);
-
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            currentStroke.push({ x, y });
-        }
-
-        function stopDrawing() {
-            if (isDrawing) {
-                isDrawing = false;
-                signatureData.push([...currentStroke]);
-                currentStroke = [];
-            }
-        }
 
         function handleTouch(e) {
             e.preventDefault();
@@ -605,19 +618,6 @@
             signatureData = [];
         });
 
-        function redrawSignature() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            signatureData.forEach(stroke => {
-                if (stroke.length > 0) {
-                    ctx.beginPath();
-                    ctx.moveTo(stroke[0].x, stroke[0].y);
-                    stroke.forEach(point => {
-                        ctx.lineTo(point.x, point.y);
-                    });
-                    ctx.stroke();
-                }
-            });
-        }
 
         // File upload validation
         document.getElementById('fileUpload').addEventListener('change', function(e) {
