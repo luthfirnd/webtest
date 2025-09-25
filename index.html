@@ -537,27 +537,47 @@
         canvas.addEventListener('touchmove', handleTouch);
         canvas.addEventListener('touchend', stopDrawing);
 
+        
+        // ---- Tambahan baru untuk hitung posisi presisi ----
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const ratio = window.devicePixelRatio || 1;
+
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const x = (clientX - rect.left) * ratio;
+            const y = (clientY - rect.top) * ratio;
+
+            return { x, y };
+        }
+
+
         function startDrawing(e) {
             isDrawing = true;
             currentStroke = [];
-            const rect = canvas.getBoundingClientRect();
-            const ratio = window.devicePixelRatio || 1;
-            const x = (e.clientX - rect.left) * ratio;
-            const y = (e.clientY - rect.top) * ratio;
+
+            const { x, y } = getCanvasCoordinates(e);
+
             ctx.beginPath();
             ctx.moveTo(x, y);
-            currentStroke.push({x, y});
+            currentStroke.push({ x, y });
         }
 
         function draw(e) {
             if (!isDrawing) return;
-            const rect = canvas.getBoundingClientRect();
-            const ratio = window.devicePixelRatio || 1;
-            const x = (e.clientX - rect.left) * ratio;
-            const y = (e.clientY - rect.top) * ratio;
+
+            const { x, y } = getCanvasCoordinates(e);
+
             ctx.lineTo(x, y);
             ctx.stroke();
-            currentStroke.push({x, y});
+            currentStroke.push({ x, y });
         }
 
         function stopDrawing() {
